@@ -146,8 +146,11 @@ class MDPAgent(Agent):
 
     def update_reward(self, state):
         self.reward = {s: self.reward_map["init"] for s in self.value}
+
+        # adaptive reward the more food becomes more rewarding the more you eat it
         numerator = self.max_food - len(api.food(state))
         self.reward_map["food"] = 10 + int(30*numerator /self.max_food)
+        # food reward can be a maximum of 40
         
         for f in api.food(state):
             self.reward[f] += self.reward_map["food"]
@@ -170,6 +173,7 @@ class MDPAgent(Agent):
     def max_utility(self, pos):
         """Returns (best_value, best_action) for a state."""
         actions = self.ACTIONS.keys()
+        # checking for actions that only result in valid positions
         actions = [action for action in actions if self.valid_pos(self.update_position(pos,action))]
         if not actions:                      # terminal state
             return self.reward[pos], None
@@ -221,7 +225,6 @@ class MDPAgent(Agent):
         legal = api.legalActions(state)
         self.policy_iteration(state)
         action = self.policy[api.whereAmI(state)]
-        # self.policy_iteration(state)
         if Directions.STOP in legal:
             legal.remove(Directions.STOP)
         # Random choice between the legal options.
