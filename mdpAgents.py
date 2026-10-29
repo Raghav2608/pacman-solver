@@ -49,7 +49,7 @@ class MDPAgent(Agent):
             "ghosts":-50,
             "food":10,
             "finish":100,
-            "danger":-10,
+            "danger":-20,
             "init":0
         }
         self.ACTIONS = {
@@ -66,7 +66,7 @@ class MDPAgent(Agent):
         "West":  ("South", "North"),
         }
         self.gamma = 0.9
-        self.danger_zone_distance = 1
+        self.danger_distance = 2
         self.value = {}
         self.policy = {}
         self.reward = {}
@@ -134,32 +134,32 @@ class MDPAgent(Agent):
         "Returns the Manhattan distance between points xy1 and xy2"
         return abs( xy1[0] - xy2[0] ) + abs( xy1[1] - xy2[1] )
 
-    def danger_zone(self):
+    def danger_zone(self,state):
         danger_zone = []
         for s in self.value:
             if s in self.ghosts:
                 continue
-            for ghosts in self.ghosts:
-                if self.manhattanDistance(ghosts,s) <= self.danger_zone_distance:
+            for ghosts in api.ghosts(state) :
+                if self.manhattanDistance(ghosts,s) <= self.danger_distance:
                     danger_zone.append(s)
         return danger_zone
 
     def update_reward(self, state):
         self.reward = {s: self.reward_map["init"] for s in self.value}
         numerator = self.max_food - len(api.food(state))
-        self.reward_map["food"] = 10 + int(50*numerator /self.max_food)
-        for f in api.food(state):
-            self.reward[f] = self.reward_map["food"]
+        self.reward_map["food"] = 10 + int(30*numerator /self.max_food)
         
-        for d in self.danger_zone():
+        for f in api.food(state):
+            self.reward[f] += self.reward_map["food"]
+        
+        for d in self.danger_zone(state):
             if d in self.reward:
-                self.reward[d] = self.reward_map["danger"]
+                self.reward[d] += self.reward_map["danger"]
         
         for g in api.ghosts(state):
             g = (int(g[0]), int(g[1]))
             if g in self.reward:
-                self.reward[g] = self.reward_map["ghosts"]
-            
+                self.reward[g] += self.reward_map["ghosts"]
         
     def q_value(self, state, action):
         """Expected utility of taking `action` in `state`."""
